@@ -1,4 +1,4 @@
-import {flowEditor} from "./core";
-import {node} from "./node";
+import { flowEditor } from './core';
+import { node } from './node';
 
-export {flowEditor, node};
+export { flowEditor, node };

@@ -1,4 +1,3 @@
-
 export const canvasHTML = `
 <div x-init="canvas = $el" x-ref="canvas" class="flow">
     <div @drop.prevent
@@ -109,13 +108,13 @@ export const canvasHTML = `
         </div>
     </div>
 </div>    
-`
+`;
 
-export function injectCanvasToEle(ele){
-    let newCanvasHtml = document.createElement('div')
-    newCanvasHtml.innerHTML = canvasHTML
-    newCanvasHtml.style.height = '100%'
-    newCanvasHtml.style.width = '100%'
-    ele.appendChild(newCanvasHtml)
-    return ele
+export function injectCanvasToEle(ele) {
+    let newCanvasHtml = document.createElement('div');
+    newCanvasHtml.innerHTML = canvasHTML;
+    newCanvasHtml.style.height = '100%';
+    newCanvasHtml.style.width = '100%';
+    ele.appendChild(newCanvasHtml);
+    return ele;
 }

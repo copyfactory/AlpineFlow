@@ -1,4 +1,4 @@
-import {node, flowEditor} from "../src/index";
-import '../src/flow.css'
+import { node, flowEditor } from '../src/index';
+import '../src/flow.css';
 
-export {flowEditor, node};
+export { flowEditor, node };

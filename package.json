@@ -1,54 +1,55 @@
 {
-  "name": "@copyfactory/alpine-flow",
-  "version": "0.0.1",
-  "description": "Alpine Flow makes creating directed step based flowcharts and node based workflow UIs (DAG) in AlpineJS an easier task.",
-  "license": "MIT",
-  "author": "Copyfactory (https://copyfactory.io/)",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/copyfactory/AlpineFlow.git"
-  },
-  "main": "src/index.js",
-  "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c -w"
-  },
-  "keywords": [
-    "Alpine.js",
-    "node-based UI",
-    "graph",
-    "DAG builder",
-    "diagram",
-    "workflow",
-    "alpine-flow"
-  ],
-  "devDependencies": {
-    "@babel/core": "^7.17.2",
-    "@babel/preset-env": "^7.16.11",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "rollup": "^2.67.2",
-    "rollup-plugin-babel": "^4.4.0",
-    "rollup-plugin-filesize": "^9.1.2",
-    "rollup-plugin-scss": "^4.0.0",
-    "rollup-plugin-terser": "^7.0.2",
-    "sass": "^1.77.1"
-  },
-  "dependencies": {
-    "@dagrejs/dagre": "^1.1.2",
-    "d3-selection": "^3.0.0",
-    "d3-zoom": "^3.0.0"
-  },
-  "files": [
-    "LICENSE",
-    "README.md",
-    "dist/"
-  ],
-  "bugs": {
-    "url": "https://github.com/copyfactory/AlpineFlow/issues"
-  },
-  "homepage": "https://github.com/copyfactory/AlpineFlow#readme",
-  "directories": {
-    "example": "examples"
-  }
+    "name": "@copyfactory/alpine-flow",
+    "version": "0.0.1",
+    "description": "Alpine Flow makes creating directed step based flowcharts and node based workflow UIs (DAG) in AlpineJS an easier task.",
+    "license": "MIT",
+    "author": "Copyfactory (https://copyfactory.io/)",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/copyfactory/AlpineFlow.git"
+    },
+    "main": "src/index.js",
+    "scripts": {
+        "build": "rollup -c",
+        "watch": "rollup -c -w"
+    },
+    "keywords": [
+        "Alpine.js",
+        "node-based UI",
+        "graph",
+        "DAG builder",
+        "diagram",
+        "workflow",
+        "alpine-flow"
+    ],
+    "devDependencies": {
+        "@babel/core": "^7.17.2",
+        "@babel/preset-env": "^7.16.11",
+        "@rollup/plugin-commonjs": "^25.0.7",
+        "@rollup/plugin-node-resolve": "^15.2.3",
+        "prettier": "3.2.5",
+        "rollup": "^2.67.2",
+        "rollup-plugin-babel": "^4.4.0",
+        "rollup-plugin-filesize": "^9.1.2",
+        "rollup-plugin-scss": "^4.0.0",
+        "rollup-plugin-terser": "^7.0.2",
+        "sass": "^1.77.1"
+    },
+    "dependencies": {
+        "@dagrejs/dagre": "^1.1.2",
+        "d3-selection": "^3.0.0",
+        "d3-zoom": "^3.0.0"
+    },
+    "files": [
+        "LICENSE",
+        "README.md",
+        "dist/"
+    ],
+    "bugs": {
+        "url": "https://github.com/copyfactory/AlpineFlow/issues"
+    },
+    "homepage": "https://github.com/copyfactory/AlpineFlow#readme",
+    "directories": {
+        "example": "examples"
+    }
 }

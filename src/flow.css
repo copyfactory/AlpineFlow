@@ -4,7 +4,7 @@
     height: 100%;
     overflow: hidden;
     position: relative;
-    z-index: 0
+    z-index: 0;
 }
 
 .flow__background {
@@ -28,7 +28,6 @@
     top: 0;
     left: 0;
 }
-
 
 .flow__canvas-container {
     position: absolute;
@@ -56,9 +55,9 @@
 }
 
 @keyframes dashdraw {
-  from {
-    stroke-dashoffset: 10;
-  }
+    from {
+        stroke-dashoffset: 10;
+    }
 }
 
 .flow__edge-path.animated {
@@ -93,9 +92,8 @@
 }
 
 .flow__toolbar {
-    box-shadow: 0 0 2px 1px rgba(0,0,0,.08);
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.08);
     display: flex;
-
 }
 
 .flow__toolbar__button {
@@ -147,5 +145,6 @@
     cursor: grab;
 }
 
-
-[x-cloak] { display: none !important; }
+[x-cloak] {
+    display: none !important;
+}

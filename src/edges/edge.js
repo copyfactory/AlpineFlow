@@ -1,4 +1,3 @@
-
 /**
  * Converts an edge data to a complete edge with necessary properties for tracking and rendering.
  * @param {Object} currentEdgeData - The data representing the current edge.
@@ -12,12 +11,12 @@
  * @param {string|null} [currentEdgeData.markerStart=null] - The marker at the start of the edge.
  * @returns {Object} - The complete edge object with attached state properties.
  */
-export function getCompleteEdge(currentEdgeData){
+export function getCompleteEdge(currentEdgeData) {
     // Returns a complete node with all props needed to track and render elements.
     let edge = Alpine.reactive({
         id: null,
         type: 'default',
-        source:'',
+        source: '',
         target: '',
         animated: false,
 
@@ -26,7 +25,7 @@ export function getCompleteEdge(currentEdgeData){
         markerStart: null,
 
         ...currentEdgeData,
-        toObject(){
+        toObject() {
             return {
                 id: this.id,
                 type: this.type,
@@ -34,14 +33,13 @@ export function getCompleteEdge(currentEdgeData){
                 target: this.target,
                 animated: this.animated,
                 className: this.className,
-            }
-        }
-    })
-    if (!edge.id){
-        edge.id = `${edge.source}.${edge.target}`
+            };
+        },
+    });
+    if (!edge.id) {
+        edge.id = `${edge.source}.${edge.target}`;
+    } else {
+        edge.id = edge.id.toString();
     }
-    else {
-        edge.id = edge.id.toString()
-    }
-    return edge
+    return edge;
 }

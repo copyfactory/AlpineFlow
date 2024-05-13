@@ -1,12 +1,11 @@
-import {getCompleteNode} from "./node";
-import {getFirstItemOrNull} from "./util";
-import * as dagre from "@dagrejs/dagre";
-import {getSmoothStepPath} from "./edges/smooth-edge";
-import {getCompleteEdge} from "./edges/edge";
-import {injectCanvasToEle} from "./canvas-html";
-import {panZoomManager} from "./viewport/viewport-manager";
-import {PanOnScrollMode} from "./viewport/events";
-
+import { getCompleteNode } from './node';
+import { getFirstItemOrNull } from './util';
+import * as dagre from '@dagrejs/dagre';
+import { getSmoothStepPath } from './edges/smooth-edge';
+import { getCompleteEdge } from './edges/edge';
+import { injectCanvasToEle } from './canvas-html';
+import { panZoomManager } from './viewport/viewport-manager';
+import { PanOnScrollMode } from './viewport/events';
 
 /**
  * Represents the parameters for initializing the flow editor.
@@ -47,7 +46,7 @@ export function flowEditor(params) {
         panOnScroll: true,
         panOnScrollSpeed: 0.5,
         panOnDrag: true,
-        minZoom: .5,
+        minZoom: 0.5,
         maxZoom: 2,
         zoomDuration: 100,
         backgroundClasses: 'dots',
@@ -56,9 +55,9 @@ export function flowEditor(params) {
     };
 
     const internalProps = {
-        areNodesReady:false,
+        areNodesReady: false,
         hasInit: false,
-        canvasPosition: {x: 0, y: 0},
+        canvasPosition: { x: 0, y: 0 },
         zoom: 1,
         grabbing: false,
 
@@ -74,17 +73,17 @@ export function flowEditor(params) {
         lastGraphResult: null,
 
         // Node lookup for doing {nodeId: {nodeId: '': type: ''...} }
-        nodeLookupCacheMap: {}
-    }
+        nodeLookupCacheMap: {},
+    };
 
-    if (!params){
-        params = {}
+    if (!params) {
+        params = {};
     }
-    let {viewport} = params
-    if (viewport){
-        let { x, y, zoom} = viewport;
-        internalProps.canvasPosition = {x: x, y:y}
-        internalProps.zoom = zoom
+    let { viewport } = params;
+    if (viewport) {
+        let { x, y, zoom } = viewport;
+        internalProps.canvasPosition = { x: x, y: y };
+        internalProps.zoom = zoom;
     }
 
     const newConfig = {
@@ -95,7 +94,8 @@ export function flowEditor(params) {
             }
             return acc;
         }, {}),
-    ...internalProps};
+        ...internalProps,
+    };
 
     return {
         ...newConfig,
@@ -103,28 +103,29 @@ export function flowEditor(params) {
          * Initializes the flow editor with provided parameters.
          */
         init() {
-            if (!this.nodeTypes){
-                this.nodeTypes = this.$nodes.default
+            if (!this.nodeTypes) {
+                this.nodeTypes = this.$nodes.default;
             }
-            injectCanvasToEle(this.$el)
+            injectCanvasToEle(this.$el);
 
-            this.nodes = this.nodes.map(incompleteNode => {
-                let nodeConfig = this.getNodeConfig(incompleteNode.type)
-                incompleteNode = {...nodeConfig, ...incompleteNode}
-                return getCompleteNode(incompleteNode)
-            })
-            this.edges = this.edges.map(edge => getCompleteEdge(edge))
+            this.nodes = this.nodes.map((incompleteNode) => {
+                let nodeConfig = this.getNodeConfig(incompleteNode.type);
+                incompleteNode = { ...nodeConfig, ...incompleteNode };
+                return getCompleteNode(incompleteNode);
+            });
+            this.edges = this.edges.map((edge) => getCompleteEdge(edge));
 
-            this.areNodesReady = true
+            this.areNodesReady = true;
 
             this.$nextTick(() => {
-                let viewportEle = this.$refs.viewportEle
-                this.panZoomInstance = this.setupPanZoomInstance(viewportEle)
-                this.hasInit = true
-                this.dispatchEvent('init', {data: true})
-
+                let viewportEle = this.$refs.viewportEle;
+                this.panZoomInstance = this.setupPanZoomInstance(viewportEle);
+                this.hasInit = true;
+                this.dispatchEvent('init', { data: true });
             });
-            this.$watch('nodes', value => this.dispatchEvent('nodes-updated', {data: value}))
+            this.$watch('nodes', (value) =>
+                this.dispatchEvent('nodes-updated', { data: value }),
+            );
         },
 
         /**
@@ -132,18 +133,18 @@ export function flowEditor(params) {
          * @param {string} EventName - The name of the event.
          * @param {Object} data - The data you want to emmit.
          */
-        dispatchEvent(EventName, data=null){
-            this.$dispatch(`flow-${EventName}`, data)
+        dispatchEvent(EventName, data = null) {
+            this.$dispatch(`flow-${EventName}`, data);
         },
-        getNodeConfig(nameName){
-            return this.nodeTypes[nameName].nodeConfig
+        getNodeConfig(nameName) {
+            return this.nodeTypes[nameName].nodeConfig;
         },
         /**
          * Checks if the flow editor has nodes.
          * @returns {boolean} - True if there are nodes, otherwise false.
          */
         hasNodes() {
-            return this.nodes.length > 0
+            return this.nodes.length > 0;
         },
 
         /**
@@ -151,7 +152,7 @@ export function flowEditor(params) {
          * @returns {boolean} - True if there are no nodes, otherwise false.
          */
         hasNoNodes() {
-            return this.nodes.length <= 0
+            return this.nodes.length <= 0;
         },
 
         /**
@@ -159,11 +160,13 @@ export function flowEditor(params) {
          * @returns {Array} - A list of nodes that are a parent to the give nodeId.
          */
         findParents(nodeId) {
-            let parents = this.lastGraphResult.inEdges(nodeId).map(edge => edge.v);
-            if (parents){
-                return parents.map(nodeId => this.getNodeById(nodeId))
+            let parents = this.lastGraphResult
+                .inEdges(nodeId)
+                .map((edge) => edge.v);
+            if (parents) {
+                return parents.map((nodeId) => this.getNodeById(nodeId));
             }
-            return []
+            return [];
         },
 
         /**
@@ -171,11 +174,13 @@ export function flowEditor(params) {
          * @returns {Array} - A list of nodes that are a children to the give nodeId.
          */
         findChildren(nodeId) {
-            let children = this.lastGraphResult.outEdges(nodeId).map(edge => edge.w);
-            if (children){
-                return children.map(nodeId => this.getNodeById(nodeId))
+            let children = this.lastGraphResult
+                .outEdges(nodeId)
+                .map((edge) => edge.w);
+            if (children) {
+                return children.map((nodeId) => this.getNodeById(nodeId));
             }
-            return []
+            return [];
         },
 
         hasChildren(nodeId) {
@@ -187,11 +192,16 @@ export function flowEditor(params) {
          * @param {Array|null} dependsOn - The nodes on which the new node depends.
          * @returns {boolean} - True if the node can be added, False otherwise.
          */
-        canAddNode(completeNode,dependsOn){
+        canAddNode(completeNode, dependsOn) {
             if (!dependsOn) return true;
             for (const nodeId of dependsOn) {
                 const node = this.getNodeById(nodeId);
-                if (!node || node.allowChildren === false || (!node.allowBranching && this.findChildren(nodeId).length > 0)) {
+                if (
+                    !node ||
+                    node.allowChildren === false ||
+                    (!node.allowBranching &&
+                        this.findChildren(nodeId).length > 0)
+                ) {
                     return false;
                 }
             }
@@ -202,23 +212,30 @@ export function flowEditor(params) {
          * @param {Object} incompleteNode - The incomplete node to be added.
          * @param {Array|null} dependsOn - The nodes on which the new node depends.
          */
-        addNode(incompleteNode, dependsOn=null){
-            if (!this.nodeTypes.hasOwnProperty(incompleteNode.type)){
-                console.warn(`'${incompleteNode.type}' does not exists in the registry.`)
-                return
+        addNode(incompleteNode, dependsOn = null) {
+            if (!this.nodeTypes.hasOwnProperty(incompleteNode.type)) {
+                console.warn(
+                    `'${incompleteNode.type}' does not exists in the registry.`,
+                );
+                return;
             }
-            let nodeConfig = this.getNodeConfig(incompleteNode.type)
-            incompleteNode = {...nodeConfig, ...incompleteNode}
+            let nodeConfig = this.getNodeConfig(incompleteNode.type);
+            incompleteNode = { ...nodeConfig, ...incompleteNode };
             // Allow setting of any node params
-            let completeNode = getCompleteNode(incompleteNode)
-            if (!this.canAddNode(completeNode, dependsOn)){
-                return
+            let completeNode = getCompleteNode(incompleteNode);
+            if (!this.canAddNode(completeNode, dependsOn)) {
+                return;
             }
 
-            dependsOn = dependsOn ? dependsOn : []
-            let newEdges = dependsOn.map(depNodeId => {return getCompleteEdge({source: depNodeId, target: completeNode.id}) })
-            this.nodes = this.nodes.concat([completeNode])
-            this.edges = this.edges.concat(newEdges)
+            dependsOn = dependsOn ? dependsOn : [];
+            let newEdges = dependsOn.map((depNodeId) => {
+                return getCompleteEdge({
+                    source: depNodeId,
+                    target: completeNode.id,
+                });
+            });
+            this.nodes = this.nodes.concat([completeNode]);
+            this.edges = this.edges.concat(newEdges);
         },
 
         /**
@@ -235,9 +252,11 @@ export function flowEditor(params) {
 
             while (queue.length > 0) {
                 const currentId = queue.shift();
-                const children = this.edges.filter(edge => edge.source === currentId);
+                const children = this.edges.filter(
+                    (edge) => edge.source === currentId,
+                );
 
-                children.forEach(child => {
+                children.forEach((child) => {
                     descendants.add(child.target);
                     if (!visited.has(child.target)) {
                         visited.add(child.target);
@@ -254,43 +273,60 @@ export function flowEditor(params) {
          * @param {string} [strategy='preserve'] - `preserve` tries to
          * keep as many nodes as possible while deleting. `all` removes all descendants of the input node.
          */
-        deleteNode(completeNode, strategy='preserve'){
-            if (!completeNode.deletable){
-                return
+        deleteNode(completeNode, strategy = 'preserve') {
+            if (!completeNode.deletable) {
+                return;
             }
-            const strategyOptions = ['preserve', 'all']
-            if (!strategyOptions.includes(strategy)){
-                return []
+            const strategyOptions = ['preserve', 'all'];
+            if (!strategyOptions.includes(strategy)) {
+                return [];
             }
-            let childrenOfNode = this.lastGraphResult.outEdges(completeNode.id).map(edge => edge.w)
+            let childrenOfNode = this.lastGraphResult
+                .outEdges(completeNode.id)
+                .map((edge) => edge.w);
 
-            let deletedNodes = [completeNode.id]
+            let deletedNodes = [completeNode.id];
 
             // if preserve set the next child to being new target.
-            if (strategy === 'preserve'){
-                if (childrenOfNode.length === 1){
-                    let matchingEdge = getFirstItemOrNull(this.edges.filter(edge => edge.target === completeNode.id))
-                    if (matchingEdge){
-                        matchingEdge.target = childrenOfNode[0]
+            if (strategy === 'preserve') {
+                if (childrenOfNode.length === 1) {
+                    let matchingEdge = getFirstItemOrNull(
+                        this.edges.filter(
+                            (edge) => edge.target === completeNode.id,
+                        ),
+                    );
+                    if (matchingEdge) {
+                        matchingEdge.target = childrenOfNode[0];
                     }
-
                 }
-                if (childrenOfNode.length > 1){
-                    deletedNodes = deletedNodes.concat(this.findDescendantsOfNode(completeNode.id))
+                if (childrenOfNode.length > 1) {
+                    deletedNodes = deletedNodes.concat(
+                        this.findDescendantsOfNode(completeNode.id),
+                    );
                 }
             }
             // if not preserve we remove all descendants.
             else {
-                deletedNodes = deletedNodes.concat(this.findDescendantsOfNode(completeNode.id))
+                deletedNodes = deletedNodes.concat(
+                    this.findDescendantsOfNode(completeNode.id),
+                );
             }
 
             // Cleanup edges.
-            this.nodes = this.nodes.filter(node => !deletedNodes.includes(node.id));
-            this.edges = this.edges.filter(edge => !deletedNodes.includes(edge.source));
-            this.edges = this.edges.filter(edge => !deletedNodes.includes(edge.target));
-            this.edgesWithPath = []
-            this.layoutGraph()
-            this.dispatchEvent('nodes-deleted', {data: Array.from(deletedNodes)})
+            this.nodes = this.nodes.filter(
+                (node) => !deletedNodes.includes(node.id),
+            );
+            this.edges = this.edges.filter(
+                (edge) => !deletedNodes.includes(edge.source),
+            );
+            this.edges = this.edges.filter(
+                (edge) => !deletedNodes.includes(edge.target),
+            );
+            this.edgesWithPath = [];
+            this.layoutGraph();
+            this.dispatchEvent('nodes-deleted', {
+                data: Array.from(deletedNodes),
+            });
         },
 
         /**
@@ -299,14 +335,16 @@ export function flowEditor(params) {
          * @returns {Object|null} - The node with the given ID, or null if not found.
          */
         getNodeById(nodeId) {
-            if (this.nodeLookupCacheMap.hasOwnProperty(nodeId)){
-                return this.nodeLookupCacheMap[nodeId]
+            if (this.nodeLookupCacheMap.hasOwnProperty(nodeId)) {
+                return this.nodeLookupCacheMap[nodeId];
             }
-            let item = getFirstItemOrNull(this.nodes.filter(node => node.id === nodeId))
-            if (item){
-                this.nodeLookupCacheMap[nodeId] = item
+            let item = getFirstItemOrNull(
+                this.nodes.filter((node) => node.id === nodeId),
+            );
+            if (item) {
+                this.nodeLookupCacheMap[nodeId] = item;
             }
-            return item
+            return item;
         },
 
         /**
@@ -314,13 +352,13 @@ export function flowEditor(params) {
          * @param {Object} completeNode - The complete node to be cloned.
          * @returns {HTMLElement | null} - The cloned element.
          */
-        getClonedEleTypeWithProps(completeNode){
-            let elToClone = this.nodeTypes[completeNode.type]
-            if (!elToClone){
-                console.warn(`${completeNode.type} not found in registry.`)
-                return null
+        getClonedEleTypeWithProps(completeNode) {
+            let elToClone = this.nodeTypes[completeNode.type];
+            if (!elToClone) {
+                console.warn(`${completeNode.type} not found in registry.`);
+                return null;
             }
-            return elToClone.ele.cloneNode(true)
+            return elToClone.ele.cloneNode(true);
         },
 
         /**
@@ -328,29 +366,38 @@ export function flowEditor(params) {
          * @param {Object} completeNode - The complete node to be rendered.
          * @returns {string} - The HTML representation of the node.
          */
-        getNodeHTMLToRender(completeNode){
+        getNodeHTMLToRender(completeNode) {
             // Returns a cloned Ele from the node type to render in the diagram.
-            let clonedNodeEle = this.getClonedEleTypeWithProps(completeNode)
-            if (!clonedNodeEle){
-                return ''
+            let clonedNodeEle = this.getClonedEleTypeWithProps(completeNode);
+            if (!clonedNodeEle) {
+                return '';
             }
-            clonedNodeEle.classList.add('flow__node')
-            clonedNodeEle.removeAttribute('x-ignore')
-            const childrenWithXIgnore = clonedNodeEle.querySelectorAll('[x-ignore]');
-            childrenWithXIgnore.forEach(child => {
-                child.removeAttribute('x-ignore')
+            clonedNodeEle.classList.add('flow__node');
+            clonedNodeEle.removeAttribute('x-ignore');
+            const childrenWithXIgnore =
+                clonedNodeEle.querySelectorAll('[x-ignore]');
+            childrenWithXIgnore.forEach((child) => {
+                child.removeAttribute('x-ignore');
             });
 
             clonedNodeEle.setAttribute('x-show', 'true');
-            clonedNodeEle.setAttribute('id', 'flow__node_id-' + completeNode.id)
-            clonedNodeEle.setAttribute(':class', "node.selected && 'selected'")
-            clonedNodeEle.setAttribute(':style', `
+            clonedNodeEle.setAttribute(
+                'id',
+                'flow__node_id-' + completeNode.id,
+            );
+            clonedNodeEle.setAttribute(':class', "node.selected && 'selected'");
+            clonedNodeEle.setAttribute(
+                ':style',
+                `
                 { 
                     transform: 'translate(' + node.position.x + 'px, ' + node.position.y + 'px)' 
                 }
-            `);
+            `,
+            );
             // Eval the template x-data that was set and merge it with the node.data value.
-            clonedNodeEle.setAttribute('x-init', `
+            clonedNodeEle.setAttribute(
+                'x-init',
+                `
                 $nextTick(() => { 
                     node.data = {...props, ...node.data};
                     props = node.data;
@@ -362,8 +409,9 @@ export function flowEditor(params) {
                     node.setComputedWidthHeight($el); 
                     layoutGraph();
                 });
-            `);
-            return clonedNodeEle.outerHTML
+            `,
+            );
+            return clonedNodeEle.outerHTML;
         },
 
         /**
@@ -383,7 +431,7 @@ export function flowEditor(params) {
             this.edges.forEach((edge) => g.setEdge(edge.source, edge.target));
 
             dagre.layout(g);
-            return g
+            return g;
         },
         /**
          * Layouts the graph based on the current state and renders the diagram.
@@ -391,36 +439,45 @@ export function flowEditor(params) {
         layoutGraph() {
             // Only render AFTER props are done doing their inner dom things.
             this.$nextTick(() => {
-
-                let g = this.buildDagre()
-                if (!g){
-                    return
+                let g = this.buildDagre();
+                if (!g) {
+                    return;
                 }
 
-                let {width, height} = g.graph()
-                this.setWidthAndHeight(width, height)
+                let { width, height } = g.graph();
+                this.setWidthAndHeight(width, height);
 
-                this.nodes.forEach(node => {
-                    const {x, y} = g.node(node.id);
-                    const {width, height} = node;
-                    this.getNodeById(node.id).position = {x: x - width / 2, y: y - height / 2}
-                })
+                this.nodes.forEach((node) => {
+                    const { x, y } = g.node(node.id);
+                    const { width, height } = node;
+                    this.getNodeById(node.id).position = {
+                        x: x - width / 2,
+                        y: y - height / 2,
+                    };
+                });
 
-                this.edgesWithPath = this.edges.map(edge => {
-                    let source = this.getNodeById(edge.source)
-                    let target = this.getNodeById(edge.target)
-                    let sourcePos = {x: source.x, y: source.y + (source.height / 2)}
-                    let targetPos = {x: target.x, y: target.y - (target.height / 2)}
-                    const [path, labelX, labelY, offsetX, offsetY] = getSmoothStepPath({
-                        sourceX: sourcePos.x,
-                        sourceY: sourcePos.y,
-                        targetX: targetPos.x,
-                        targetY: targetPos.y,
-                    })
-                    return {edge: edge, path: path}
-                })
-                this.lastGraphResult = g
-            })
+                this.edgesWithPath = this.edges.map((edge) => {
+                    let source = this.getNodeById(edge.source);
+                    let target = this.getNodeById(edge.target);
+                    let sourcePos = {
+                        x: source.x,
+                        y: source.y + source.height / 2,
+                    };
+                    let targetPos = {
+                        x: target.x,
+                        y: target.y - target.height / 2,
+                    };
+                    const [path, labelX, labelY, offsetX, offsetY] =
+                        getSmoothStepPath({
+                            sourceX: sourcePos.x,
+                            sourceY: sourcePos.y,
+                            targetX: targetPos.x,
+                            targetY: targetPos.y,
+                        });
+                    return { edge: edge, path: path };
+                });
+                this.lastGraphResult = g;
+            });
         },
         /**
          * Sets the with and height to the canvas in order to compute various viewports.
@@ -429,15 +486,15 @@ export function flowEditor(params) {
          * @param {number} w - The new width.
          * @param {number} h - The new height.
          */
-        setWidthAndHeight(w,h){
+        setWidthAndHeight(w, h) {
             // we need to dispatch to the canvas-html element which sets it.
-            this.dispatchEvent('set-h-w', {height: h, width: w})
+            this.dispatchEvent('set-h-w', { height: h, width: w });
         },
         /**
          * Creates the D3 instance to pan and zoom the editor.
          * @param {HTMLElement} ele - the D3 instance to pan and zoom the editor.
          */
-        setupPanZoomInstance(ele){
+        setupPanZoomInstance(ele) {
             let newZoom = panZoomManager({
                 domNode: ele,
                 minZoom: this.minZoom,
@@ -445,15 +502,15 @@ export function flowEditor(params) {
                 viewport: this.getViewport(),
                 onTransformChange: (transform) => {
                     if (this.hasNoNodes()) {
-                        return
+                        return;
                     }
-                    this.canvasPosition = { x: transform[0], y: transform[1]}
-                    this.zoom = transform[2]
+                    this.canvasPosition = { x: transform[0], y: transform[1] };
+                    this.zoom = transform[2];
                 },
                 onDraggingChange: (paneDragging) => {
-                    this.grabbing = paneDragging
+                    this.grabbing = paneDragging;
                 },
-            })
+            });
             newZoom.update({
                 zoomOnScroll: this.zoomOnWheelScroll,
                 zoomOnPinch: this.zoomOnPinch,
@@ -461,19 +518,21 @@ export function flowEditor(params) {
                 panOnScrollSpeed: this.panOnScrollSpeed,
                 panOnScrollMode: PanOnScrollMode.Free,
                 panOnDrag: this.panOnDrag,
-                defaultViewport: {x: 0, y: 0, zoom: 1},
+                defaultViewport: { x: 0, y: 0, zoom: 1 },
                 minZoom: this.minZoom,
                 maxZoom: this.maxZoom,
-                preventScrolling: true
-            })
-            return newZoom
+                preventScrolling: true,
+            });
+            return newZoom;
         },
         /**
          * Zooms out the viewport.
          * @param {number} [zoomStep=1 / 1.2] - The factor to zoom out.
          */
         zoomOut(zoomStep = 1 / 1.2) {
-            this.panZoomInstance.scaleBy(zoomStep, {duration: this.zoomDuration})
+            this.panZoomInstance.scaleBy(zoomStep, {
+                duration: this.zoomDuration,
+            });
         },
 
         /**
@@ -481,7 +540,9 @@ export function flowEditor(params) {
          * @param {number} [zoomStep=1.2] - The factor to zoom in.
          */
         zoomIn(zoomStep = 1.2) {
-            this.panZoomInstance.scaleBy(zoomStep, {duration: this.zoomDuration})
+            this.panZoomInstance.scaleBy(zoomStep, {
+                duration: this.zoomDuration,
+            });
         },
 
         /**
@@ -507,15 +568,19 @@ export function flowEditor(params) {
             let zoom = Math.min(
                 canvasRect.width / (this.width * (1 + widthPadding)),
                 canvasRect.height / (this.height * (1 + heightPadding)),
-                this.maxZoom
+                this.maxZoom,
             );
 
             // Calculate the coordinates of the top-left corner of the viewport.
-            let viewportX = centerX - (this.width * zoom / 2);
-            let viewportY = centerY - (this.height * zoom / 2);
+            let viewportX = centerX - (this.width * zoom) / 2;
+            let viewportY = centerY - (this.height * zoom) / 2;
 
             // Set the viewport using the calculated values.
-            this.panZoomInstance.setViewport({ x: viewportX, y: viewportY, zoom: zoom });
+            this.panZoomInstance.setViewport({
+                x: viewportX,
+                y: viewportY,
+                zoom: zoom,
+            });
         },
 
         /**
@@ -525,31 +590,34 @@ export function flowEditor(params) {
          * @param {number} zoom - The new zoom level.
          * @returns {Object} - The plain object representation of the viewport.
          */
-        setViewPort(x=0,y=0, zoom=1){
-            this.panZoomInstance.setViewport({x: x, y:y, zoom: zoom}, {duration: this.zoomDuration})
-            return this.getViewport()
+        setViewPort(x = 0, y = 0, zoom = 1) {
+            this.panZoomInstance.setViewport(
+                { x: x, y: y, zoom: zoom },
+                { duration: this.zoomDuration },
+            );
+            return this.getViewport();
         },
         /**
          * Gets the current viewport as an object.
          * @returns {Object} - The plain object representation of the viewport.
          */
-        getViewport(){
-          return {
-              zoom: this.zoom,
-              x: this.canvasPosition.x,
-              y: this.canvasPosition.y
-          }
+        getViewport() {
+            return {
+                zoom: this.zoom,
+                x: this.canvasPosition.x,
+                y: this.canvasPosition.y,
+            };
         },
         /**
          * Converts the flow editor object to a plain object.
          * @returns {Object} - The plain object representation of the flow editor.
          */
-        toObject(){
+        toObject() {
             return {
-                nodes: this.nodes.map(node => node.toObject()),
-                edges: this.edges.map(edge => edge.toObject()),
-                viewport: this.getViewport()
-            }
+                nodes: this.nodes.map((node) => node.toObject()),
+                edges: this.edges.map((edge) => edge.toObject()),
+                viewport: this.getViewport(),
+            };
         },
     };
 }

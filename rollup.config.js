@@ -1,9 +1,9 @@
-import commonjs from "@rollup/plugin-commonjs";
-import resolve from "@rollup/plugin-node-resolve";
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
-import { terser } from "rollup-plugin-terser";
+import { terser } from 'rollup-plugin-terser';
 import scss from 'rollup-plugin-scss';
-import filesize from "rollup-plugin-filesize";
+import filesize from 'rollup-plugin-filesize';
 
 // Common plugin configurations
 const plugins = [
@@ -24,7 +24,7 @@ const plugins = [
             ],
         ],
     }),
-    scss({ fileName: 'flow.css', outputStyle: "compressed" })
+    scss({ fileName: 'flow.css', outputStyle: 'compressed' }),
 ];
 
 // Rollup configurations
@@ -37,7 +37,7 @@ export default [
             format: 'umd',
             name: 'alpine-flow',
         },
-        plugins: plugins
+        plugins: plugins,
     },
     // CDN - minified
     {
@@ -56,7 +56,7 @@ export default [
             file: 'dist/alpine-flow.esm.js',
             format: 'esm',
         },
-        plugins: [...plugins, terser()]
+        plugins: [...plugins, terser()],
     },
     // CommonJS
     {
@@ -65,6 +65,6 @@ export default [
             file: 'dist/alpine-flow.cjs.js',
             format: 'cjs',
         },
-        plugins: [...plugins, terser()]
-    }
+        plugins: [...plugins, terser()],
+    },
 ];

@@ -15,11 +15,11 @@
  * @param {number} [currentNodeData.height=0] - The height of the node.
  * @returns {Object} - The complete node object with attached state properties.
  */
-export function getCompleteNode(currentNodeData){
+export function getCompleteNode(currentNodeData) {
     let newNode = Alpine.reactive({
         id: null,
         data: {},
-        position: {x: 0, y: 0},
+        position: { x: 0, y: 0 },
         type: '',
         selected: false,
         selectable: true,
@@ -27,19 +27,19 @@ export function getCompleteNode(currentNodeData){
         allowBranching: false,
         allowChildren: true,
         width: 0,
-        height:0,
+        height: 0,
         ...currentNodeData,
 
         /**
          * Sets the computed width and height of the node.
          * @param {HTMLElement} ele - The element representing the node.
          */
-        setComputedWidthHeight(ele){
-            let styles = window.getComputedStyle(ele)
-            this.width = parseFloat(styles.width)
-            this.height = parseFloat(styles.height)
+        setComputedWidthHeight(ele) {
+            let styles = window.getComputedStyle(ele);
+            this.width = parseFloat(styles.width);
+            this.height = parseFloat(styles.height);
         },
-        toObject(){
+        toObject() {
             return {
                 id: this.id,
                 data: this.data,
@@ -52,43 +52,53 @@ export function getCompleteNode(currentNodeData){
                 allowBranching: this.allowBranching,
                 width: this.width,
                 height: this.height,
-            }
-        }
-    })
-    newNode.id = newNode.id.toString()
-    return newNode
+            };
+        },
+    });
+    newNode.id = newNode.id.toString();
+    return newNode;
 }
 
-const nodeRegistry = {'default': {}}
+const nodeRegistry = { default: {} };
 
 export const node = (Alpine) => {
-	Alpine.directive('node', (el, { value, expression, modifiers }, {evaluate}) => {
-        if (!expression){
-            console.warn('Node not registered due to missing config. Modify to `x-node="{type: myNodeName}"`')
-            return
-        }
-        let nodeConfig = evaluate(expression);
-
-        if (!'type' in nodeConfig){
-            console.warn('Node not registered due to missing name. Modify to `x-node="{type: myNodeName}"`')
-            return
-        }
-        el.setAttribute('x-ignore', true)
-        el.removeAttribute('x-node')
-
-        if (!modifiers.length){
-            modifiers.push('default')
-        }
-        modifiers.forEach(registryName => {
-            if (!nodeRegistry.hasOwnProperty(registryName)){
-                nodeRegistry[registryName] = {}
+    Alpine.directive(
+        'node',
+        (el, { value, expression, modifiers }, { evaluate }) => {
+            if (!expression) {
+                console.warn(
+                    'Node not registered due to missing config. Modify to `x-node="{type: myNodeName}"`',
+                );
+                return;
             }
-            nodeRegistry[registryName][nodeConfig.type] = {ele: el, nodeConfig: nodeConfig}
-        })
-        el.remove()
-	}).before('ignore');
+            let nodeConfig = evaluate(expression);
+
+            if ((!'type') in nodeConfig) {
+                console.warn(
+                    'Node not registered due to missing name. Modify to `x-node="{type: myNodeName}"`',
+                );
+                return;
+            }
+            el.setAttribute('x-ignore', true);
+            el.removeAttribute('x-node');
+
+            if (!modifiers.length) {
+                modifiers.push('default');
+            }
+            modifiers.forEach((registryName) => {
+                if (!nodeRegistry.hasOwnProperty(registryName)) {
+                    nodeRegistry[registryName] = {};
+                }
+                nodeRegistry[registryName][nodeConfig.type] = {
+                    ele: el,
+                    nodeConfig: nodeConfig,
+                };
+            });
+            el.remove();
+        },
+    ).before('ignore');
 
     Alpine.magic('nodes', (el, { Alpine }) => {
-		return nodeRegistry
-	});
+        return nodeRegistry;
+    });
 };
