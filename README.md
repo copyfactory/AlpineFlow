@@ -273,12 +273,14 @@ The `type` is required and must be unique as we register the Node under that nam
 When a new `x-node` is declared your component has access to a `node` object which contains the nodeId, it's data and
 the node config.
 
+
 | Name           | Type      | Description                                                  | Default |
-| -------------- | --------- | ------------------------------------------------------------ | ------- | --- | --- |
+| -------------- | --------- | ------------------------------------------------------------ | ------- |
 | type           | `String`  | The name of the registered Node.                             |         |
 | deletable      | `Boolean` | True/False for if this node type can be deleted.             | `true`  |
-| allowBranching | `Boolean` | True/False for if this node type can have multiple children. | `false` |     |     |
+| allowBranching | `Boolean` | True/False for if this node type can have multiple children. | `false` |
 | allowChildren  | `Boolean` | True/False for if this node type can have children.          | `true`  |
+
 
 **Example usage**
 
