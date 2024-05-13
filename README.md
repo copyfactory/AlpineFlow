@@ -1,3 +1,5 @@
+![alpine-flow-demo.gif](examples/alpine-flow-demo.gif)
+
 # Alpine Flow
 
 ## About
