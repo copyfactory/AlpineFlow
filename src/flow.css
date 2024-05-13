@@ -1,0 +1,151 @@
+.flow {
+    direction: ltr;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    z-index: 0
+}
+
+.flow__background {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+.flow__background.dots {
+    background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+    background-size: 16px 16px;
+}
+
+.flow__renderer {
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+
+.flow__canvas-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.flow__viewport {
+    transform-origin: 0 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.flow__edges {
+    pointer-events: none;
+    overflow: visible;
+}
+
+.flow__edge-path {
+    stroke: #b1b1b7;
+    stroke-width: 1;
+    fill: none;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+}
+
+.flow__edge-path.animated {
+    stroke-dasharray: 5;
+    animation: dashdraw 0.5s linear infinite;
+}
+
+.flow__nodes {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+}
+
+.flow__node {
+    position: absolute;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    pointer-events: all;
+    transform-origin: 0 0;
+    box-sizing: border-box;
+    cursor: -webkit-pointer;
+    cursor: pointer;
+}
+
+.flow__panel {
+    position: absolute;
+    z-index: 5;
+    margin: 15px;
+}
+
+.flow__toolbar {
+    box-shadow: 0 0 2px 1px rgba(0,0,0,.08);
+    display: flex;
+
+}
+
+.flow__toolbar__button {
+    align-items: center;
+    background: #fefefe;
+    border: none;
+    border-right: 1px solid #eee;
+    box-sizing: content-box;
+    cursor: pointer;
+    display: flex;
+    height: 16px;
+    justify-content: center;
+    padding: 5px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    width: 16px;
+}
+
+.flow__toolbar__button:hover {
+    background: #f4f4f4;
+}
+
+.flow__panel.hidden {
+    display: none;
+}
+
+.flow__panel.top {
+    top: 0;
+}
+
+.flow__panel.bottom {
+    bottom: 0;
+}
+
+.flow__panel.left {
+    left: 0;
+}
+
+.flow__panel.right {
+    right: 0;
+}
+
+.dragging {
+    cursor: grabbing;
+}
+
+.grabbing {
+    cursor: grab;
+}
+
+
+[x-cloak] { display: none !important; }
