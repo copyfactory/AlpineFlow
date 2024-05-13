@@ -8,12 +8,12 @@ export default {
     input: 'builds/cdn.js',
     output: [
         {
-            file: 'dist/flow-factory.js',
+            file: 'dist/alpine-flow.js',
             format: 'umd',
             sourcemap: true,
         },
         {
-            file: 'dist/flow-factory.min.js',
+            file: 'dist/alpine-flow.min.js',
             format: 'umd',
             plugins: [terser()],
             sourcemap: true,
