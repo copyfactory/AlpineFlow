@@ -1,0 +1,252 @@
+<!doctype html>
+<html class="h-full bg-white" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Alpine flow advanced example</title>
+    <link href='https://unpkg.com/@copyfactory/alpine-flow@latest/dist/flow.css' rel='stylesheet' type='text/css'>
+    <script defer src="https://unpkg.com/@copyfactory/alpine-flow@latest/dist/alpine-flow.cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,container-queries"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/anchor@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-screen w-screen">
+<div
+    @flow-init.window.once="setTimeout(() => editorInstance.setViewportToCenter(), 1)"
+    @flow-nodes-updated="if (editorInstance.hasNoNodes()){ editorInstance.addNode(defaultNode) }"
+    x-data="{
+        defaultNode: {id: 1, type: 'Send email'},
+        slideOverOpen: false,
+        selectedId: null,
+        editorInstance: null,
+        animateEdges: function animateEdges(edges){
+            this.editorInstance.edges.forEach(edge => edge.animated = !edge.animated)
+        },
+        handleDrop: function handleDrop(event, node){
+            let type = event.dataTransfer.getData('text/plain');
+            if (typeof type === undefined || !type) {
+                return;
+            }
+            const newNode = {
+                type,
+                id: this.genNodeId(),
+            };
+            this.addNode(newNode, [node.id])
+        },
+        genNodeId: function getNextNodeId(){return Math.random().toString(16).slice(2)}
+    }" class="grid h-full w-full grid-cols-4 gap-4">
+
+    <!-- Send email node -->
+    <div x-cloak
+        x-node="{type: 'Send email'}"
+        x-data="{
+            openMenu: false,
+            props: {from: 'from: Me', to: 'to: You', content: ''},
+        }">
+        <div
+            @drop.stop="handleDrop(event, node)"
+            @click="selectedId=node.id;slideOverOpen=true"
+            :class="props.from.length && props.to.length && props.content.length ? 'border-green-700' : 'border-orange-700'"
+            class="w-72 rounded border bg-white text-card-foreground hover:shadow-lg">
+            <!--
+            Any child element of the declared node with an 'x-ignore' directive is removed when rendered in the editor.
+            This is a nice way to have any init logic that depends on the node to work without crashing Alpine.
+            In this example, the <template> would not work since on first page load the <template> is rendered and Alpine
+            would look to render 'node.id'.
+            Adding x-ignore prevents Alpine from crawling it and therefore makes everyone happy.
+
+            **important** do not add 'x-ignore' to the same div as 'x-node' since that would mean we don't find the node!
+            -->
+            <div x-ignore class="p-4 space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="rounded bg-gray-800 p-2 text-white ring-1 ring-gray-100">
+                        <i class="h-4 w-4" data-lucide="mail-plus"></i>
+                    </div>
+                    <h3 x-text="node.id" class="font-semibold text-gray-900 text-md dark:text-gray-100">Send email</h3>
+                </div>
+                <div @click.outside="openMenu = false" @click.stop="openMenu = ! openMenu"
+                     class="flex items-center rounded hover:bg-gray-50 p-1">
+                    <i x-ref="menuButton" class="h-4 w-4" data-lucide="ellipsis-vertical"></i>
+                </div>
+                <div x-show="openMenu" x-anchor="$refs.menuButton">
+                    <div class="w-36">
+                        <div class="mt-1 rounded-md border border-gray-50 bg-white p-1 text-gray-700 shadow-md">
+                            <button @click.stop="deleteNode(node)" type="button" class="relative flex w-full items-center rounded px-2 text-xs text-red-500 space-x-2 py-1.5 hover:bg-gray-100 hover:text-red-700">
+                                <i class="h-4 w-4" data-lucide="trash"></i>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <template x-teleport="#slideOverContent">
+                    <div x-show="selectedId === node.id" class="absolute inset-0 px-4 sm:px-5">
+                        <h2 class="text-base font-semibold leading-6 text-gray-900" id="slide-over-title">
+                            Editing node: <span x-text="node.id"></span>
+                        </h2>
+                        <div class="relative h-full overflow-hidden py-4">
+                            <div class="rounded border border-gray-300 divide-y divide-gray-100">
+                                <div>
+
+                                    <input
+                                            x-model="props.from"
+                                            type="text"
+                                            placeholder="from:"
+                                       class="block w-full rounded border-0 placeholder:text-gray-400 text-gray-900 py-1.5 focus:ring-0 sm:text-sm sm:leading-6">
+                                </div>
+                                <div>
+                                    <input
+                                            x-model="props.to"
+                                            type="text"
+                                            placeholder="to:"
+                                            class="block w-full rounded border-0 placeholder:text-gray-400 text-gray-900 py-1.5 focus:ring-0 sm:text-sm sm:leading-6">
+                                </div>
+                                <div>
+                                    <textarea
+                                            x-model="props.content"
+                                            rows="4"
+                                            placeholder="Add some text here and the email node border will go green!"
+                                            class="block w-full rounded border-0 placeholder:text-gray-400 text-gray-900 py-1.5 focus:ring-0 sm:text-sm sm:leading-6"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        </div>
+
+    </div>
+
+    <div x-cloak
+         x-node="{type: 'Create path', allowBranching: true}"
+         x-data="{openMenu: false, props: {}}">
+        <div
+            @drop.stop="handleDrop(event, node)"
+            class="w-72 rounded border bg-white text-card-foreground hover:shadow-lg">
+            <div class="p-4 space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="rounded bg-gray-800 p-2 text-white ring-1 ring-gray-100">
+                        <i class="h-4 w-4" data-lucide="split"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 text-md dark:text-gray-100">Dummy path</h3>
+                </div>
+                <div @click.outside="openMenu = false" @click.stop="openMenu = ! openMenu" class="flex items-center space-x-2">
+                    <i x-ref="menuButton" class="h-4 w-4" data-lucide="ellipsis-vertical"></i>
+                </div>
+                <div x-show="openMenu" x-anchor="$refs.menuButton">
+                    <div class="w-36">
+                        <div class="mt-1 rounded-md border border-gray-50 bg-white p-1 text-gray-700 shadow-md">
+                            <button @click="deleteNode(node)" type="button" class="relative flex w-full items-center rounded px-2 text-xs text-red-500 space-x-2 py-1.5 hover:bg-gray-100 hover:text-red-700">
+                                <i class="h-4 w-4" data-lucide="trash"></i>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="col-span-1 border-gray-200 bg-gray-50 p-2 shadow border-e space-y-4">
+        <div class="inline-flex w-full items-center justify-center py-4 font-semibold text-gray-900 space-x-2">
+            <i class="h-6 w-6" data-lucide="workflow"></i>
+            <h1 class="text-base font-semibold leading-6 text-gray-900">Alpine Flow</h1>
+        </div>
+        <span class="isolate inline-flex w-full rounded">
+
+            <button type="button"
+                    @click="animateEdges"
+                    class="relative -ml-px inline-flex items-center rounded bg-white px-3 py-2 text-xs text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10">
+                Toggle edge animation
+            </button>
+        </span>
+
+        <div>
+            <h5 class="font-semibold text-gray-800">Nodes</h5>
+            <div class="rounded bg-white shadow">
+            <div class="rounded ring-1 ring-gray-200 divide-y divide-gray-100">
+            <template hidden x-for="option in Object.keys($nodes.default)">
+                <div
+                        draggable="true"
+                        @dragstart="event.dataTransfer.setData('text/plain', option);
+                                 event.dataTransfer.effectAllowed = 'move';"
+                        class="flex rounded w-full items-center p-2">
+                    <div class="inline-flex w-full items-center rounded p-1 px-2 space-x-2 hover:bg-gray-50">
+                        <i x-init="lucide.createIcons();" class="h-4 w-4" data-lucide="grip-vertical"></i>
+                        <span class="text-sm font-normal text-gray-600 hover:text-gray-800" x-text="option.toLowerCase()"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+        </div>
+        </div>
+
+        <div>
+            <h5 class="font-semibold text-gray-800">Realtime output</h5>
+            <template x-if="editorInstance !== null">
+                <div class="rounded bg-white shadow">
+                    <div class="h-full max-h-64 w-full overflow-auto rounded ring-1 ring-gray-200 divide-y divide-gray-100">
+                        <pre class="text-xs text-gray-700" x-text="JSON.stringify(editorInstance.toObject(), undefined, 2)"></pre>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+    <div class="col-span-3 p-2">
+        <div class="h-full w-full rounded-sm border border-gray-500 bg-white shadow-md">
+            <div
+                    x-init="editorInstance = editor;"
+                    x-data="editor = flowEditor({nodes: [defaultNode], maxZoom: 1.2})" class="h-full w-full rounded-sm p-1">
+            </div>
+        </div>
+    </div>
+
+<template x-teleport="body">
+    <div
+        x-show="slideOverOpen"
+        x-init="lucide.createIcons();"
+        @keydown.window.escape="slideOverOpen=false"
+        class="relative z-[99]">
+        <div x-show="slideOverOpen" x-transition.opacity.duration.200ms @click="slideOverOpen = false" class="fixed inset-0 bg-black bg-opacity-10"></div>
+        <div class="fixed inset-0 overflow-hidden">
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+                    <div
+                        x-show="slideOverOpen"
+                        @click.away="slideOverOpen = false"
+                        class="w-screen max-w-md">
+                        <div class="flex h-full flex-col overflow-y-scroll border-l border-gray-50 bg-white py-5 shadow-lg">
+                            <div class="px-4 sm:px-5">
+                                <div class="flex items-start justify-between pb-1">
+                                    <div class="ml-3 flex h-auto items-center">
+                                        <button @click="slideOverOpen=false" class="absolute top-0 right-0 z-30 mt-4 mr-5 flex items-center justify-center rounded px-3 py-2 text-gray-600 space-x-1 hover:bg-gray-100">
+                                            <i class="h-4 w-4" data-lucide="x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="slideOverContent" class="relative mt-5 flex-1 px-4 sm:px-5">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+</div>
+
+
+<script>
+    lucide.createIcons();
+</script>
+
+</body>
+</html>

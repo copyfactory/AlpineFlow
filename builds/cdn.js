@@ -1,6 +1,5 @@
-import {flowEditor} from "../src/core";
-import {node} from "../src/node";
-
+import {flowEditor, node} from "../src/index";
+import '../src/flow.css'
 
 document.addEventListener('alpine:init', () => {
     window.Alpine.plugin(node);

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Alpine flow basic example</title>
+    <link href='https://unpkg.com/@copyfactory/alpine-flow@latest/dist/flow.css' rel='stylesheet' type='text/css'>
+    <script defer src="https://unpkg.com/@copyfactory/alpine-flow@latest/dist/alpine-flow.cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+
+<div x-cloak
+     x-node="{type: 'my first node'}"
+     x-data="{isClicked: false, props: {text: 'Default text'}}"
+     @click="
+        props.text = (Math.random() + 1).toString(36).substring(7);
+        isClicked = !isClicked"
+     >
+    <div>
+        <p :style="isClicked && { color: 'green' }" x-text="props.text"></p>
+    </div>
+</div>
+
+<div x-data="{
+        liveEditor: null,
+        node1: {id: 1, type: 'my first node'},
+        node2: {id: 2, type: 'my first node'},
+    }" style="display: flex;">
+    <div style="flex: 1;">
+        <div x-init="liveEditor=editor" x-data="editor = flowEditor({
+                nodes: [node1, node2],
+                edges: [{source: node1.id, target: node2.id}]
+            })"
+             style="width:500px;height:500px"></div>
+    </div>
+    <div style="flex: 1;">
+        <h6>Live output</h6>
+        <pre x-text="JSON.stringify(liveEditor.toObject(),null,2)"></pre>
+    </div>
+
+</div>
+
+</body>
+</html>
