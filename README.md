@@ -80,6 +80,17 @@ Alpine Flow makes creating directed step based flowcharts and node based workflo
 npm i @copyfactory/alpine-flow
 ```
 
+```js
+import Alpine from 'alpinejs'
+import { node, flowEditor } from '@copyfactory/alpine-flow';
+import '@copyfactory/alpine-flow/dist/flow.css'
+
+window.Alpine = Alpine
+window.Alpine.plugin(node);
+window.Alpine.data('flowEditor', flowEditor);
+Alpine.start()
+```
+
 ## Concepts
 
 ### What is a node?
