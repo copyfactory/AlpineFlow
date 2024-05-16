@@ -8,7 +8,6 @@
         "type": "git",
         "url": "git+https://github.com/copyfactory/AlpineFlow.git"
     },
-    "main": "src/index.js",
     "scripts": {
         "build": "rollup -c",
         "watch": "rollup -c -w"
@@ -40,6 +39,9 @@
         "d3-selection": "^3.0.0",
         "d3-zoom": "^3.0.0"
     },
+    "main": "dist/alpine-flow.cjs.js",
+    "module": "dist/alpine-flow.esm.js",
+    "unpkg": "dist/alpine-flow.cdn.min.js",
     "files": [
         "LICENSE",
         "README.md",
