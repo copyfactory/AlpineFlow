@@ -246,7 +246,7 @@ export function flowEditor(params) {
         findAncestorsOfNode(nodeId) {
             const ancestors = new Set();
             const visited = new Set();
-            const stack = [nodeId]; // Use a stack for DFS traversal
+            const stack = [nodeId];
             while (stack.length > 0) {
                 const currentId = stack.pop();
                 const parents = this.lastGraphResult.predecessors(currentId);
@@ -270,7 +270,7 @@ export function flowEditor(params) {
         findDescendantsOfNode(nodeId) {
             const descendants = new Set();
             const visited = new Set();
-            const queue = [nodeId]; // Use a queue for BFS traversal
+            const queue = [nodeId];
 
             visited.add(nodeId);
 
