@@ -238,6 +238,30 @@ export function flowEditor(params) {
             this.edges = this.edges.concat(newEdges);
         },
 
+         /**
+         * Recursively searches the graph for ancestors of a given nodeId.
+         * @param {string} nodeId - The nodeId.
+         * @return {Array} - List of node IDs.
+         */
+        findAncestorsOfNode(nodeId) {
+            const ancestors = new Set();
+            const visited = new Set();
+            const stack = [nodeId]; // Use a stack for DFS traversal
+            while (stack.length > 0) {
+                const currentId = stack.pop();
+                const parents = this.lastGraphResult.predecessors(currentId);
+                if (parents) {
+                    parents.forEach((parent) => {
+                        if (!visited.has(parent)) {
+                            visited.add(parent);
+                            ancestors.add(parent);
+                            stack.push(parent);
+                        }
+                    });
+                }
+            }
+            return Array.from(ancestors);
+        },
         /**
          * Recursively searches the editor for descendents of a given nodeId.
          * @param {string} nodeId - The nodeId.
