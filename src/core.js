@@ -213,6 +213,7 @@ export function flowEditor(params) {
          * @param {Array|null} dependsOn - The nodes on which the new node depends.
          */
         addNode(incompleteNode, dependsOn = null) {
+            dependsOn = dependsOn ? dependsOn : [];
             if (!this.nodeTypes.hasOwnProperty(incompleteNode.type)) {
                 console.warn(
                     `'${incompleteNode.type}' does not exists in the registry.`,
@@ -224,10 +225,28 @@ export function flowEditor(params) {
             // Allow setting of any node params
             let completeNode = getCompleteNode(incompleteNode);
             if (!this.canAddNode(completeNode, dependsOn)) {
+                // If can't add node directly we can try to shift the branch down by one
+                // when only 1 dependant.
+                if (dependsOn.length === 1){
+                    let depNodeId = dependsOn[0]
+                    let successors = this.lastGraphResult.successors(depNodeId)
+                    let adjustedEdges = []
+                    if (successors.length){
+                        successors.forEach(child => {
+                            this.edges = this.edges.filter(edge => edge.target !== child)
+                            let newEdge = {source: completeNode.id, target: child}
+                            adjustedEdges.push(getCompleteEdge(newEdge))
+                        })
+                        adjustedEdges.push(getCompleteEdge({
+                            source: depNodeId,
+                            target: completeNode.id,
+                        }))
+                        this.nodes = this.nodes.concat([completeNode]);
+                        this.edges = this.edges.concat(adjustedEdges);
+                    }
+                }
                 return;
             }
-
-            dependsOn = dependsOn ? dependsOn : [];
             let newEdges = dependsOn.map((depNodeId) => {
                 return getCompleteEdge({
                     source: depNodeId,
