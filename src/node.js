@@ -57,7 +57,7 @@ export function getCompleteNode(currentNodeData) {
         },
     });
     newNode.id = newNode.id.toString();
-    newNode.positionComputed = false
+    newNode.positionComputed = false;
     return newNode;
 }
 

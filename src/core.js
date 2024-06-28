@@ -227,20 +227,27 @@ export function flowEditor(params) {
             if (!this.canAddNode(completeNode, dependsOn)) {
                 // If can't add node directly we can try to shift the branch down by one
                 // when only 1 dependant.
-                if (dependsOn.length === 1){
-                    let depNodeId = dependsOn[0]
-                    let successors = this.lastGraphResult.successors(depNodeId)
-                    let adjustedEdges = []
-                    if (successors.length){
-                        successors.forEach(child => {
-                            this.edges = this.edges.filter(edge => edge.target !== child)
-                            let newEdge = {source: completeNode.id, target: child}
-                            adjustedEdges.push(getCompleteEdge(newEdge))
-                        })
-                        adjustedEdges.push(getCompleteEdge({
-                            source: depNodeId,
-                            target: completeNode.id,
-                        }))
+                if (dependsOn.length === 1) {
+                    let depNodeId = dependsOn[0];
+                    let successors = this.lastGraphResult.successors(depNodeId);
+                    let adjustedEdges = [];
+                    if (successors.length) {
+                        successors.forEach((child) => {
+                            this.edges = this.edges.filter(
+                                (edge) => edge.target !== child,
+                            );
+                            let newEdge = {
+                                source: completeNode.id,
+                                target: child,
+                            };
+                            adjustedEdges.push(getCompleteEdge(newEdge));
+                        });
+                        adjustedEdges.push(
+                            getCompleteEdge({
+                                source: depNodeId,
+                                target: completeNode.id,
+                            }),
+                        );
                         this.nodes = this.nodes.concat([completeNode]);
                         this.edges = this.edges.concat(adjustedEdges);
                     }
@@ -257,7 +264,7 @@ export function flowEditor(params) {
             this.edges = this.edges.concat(newEdges);
         },
 
-         /**
+        /**
          * Recursively searches the graph for ancestors of a given nodeId.
          * @param {string} nodeId - The nodeId.
          * @return {Array} - List of node IDs.
@@ -494,8 +501,8 @@ export function flowEditor(params) {
                 this.nodes.forEach((node) => {
                     const { x, y } = g.node(node.id);
                     const { width, height } = node;
-                    let currentNode = this.getNodeById(node.id)
-                    currentNode.positionComputed = true
+                    let currentNode = this.getNodeById(node.id);
+                    currentNode.positionComputed = true;
                     currentNode.position = {
                         x: x - width / 2,
                         y: y - height / 2,
