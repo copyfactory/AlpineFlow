@@ -9,8 +9,9 @@
         "url": "git+https://github.com/copyfactory/AlpineFlow.git"
     },
     "scripts": {
-        "build": "rollup -c",
-        "watch": "rollup -c -w"
+        "build": "npm run clean && rollup -c",
+        "watch": "rollup -c -w",
+        "clean": "rimraf lib dist"
     },
     "keywords": [
         "Alpine.js",
@@ -27,6 +28,7 @@
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "prettier": "3.2.5",
+        "rimraf": "^5.0.7",
         "rollup": "^2.67.2",
         "rollup-plugin-babel": "^4.4.0",
         "rollup-plugin-filesize": "^9.1.2",
