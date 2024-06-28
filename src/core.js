@@ -433,7 +433,8 @@ export function flowEditor(params) {
                 ':style',
                 `
                 { 
-                    transform: 'translate(' + node.position.x + 'px, ' + node.position.y + 'px)' 
+                    transform: 'translate(' + node.position.x + 'px, ' + node.position.y + 'px)',
+                    opacity: node.positionComputed ? '100': '0'
                 }
             `,
             );
@@ -444,8 +445,8 @@ export function flowEditor(params) {
                 $nextTick(() => { 
                     node.data = {...props, ...node.data};
                     props = node.data;
-                    node.setComputedWidthHeight($el); 
-                    layoutGraph(); 
+                    node.setComputedWidthHeight($el);
+                 
                 });
                 $watch('props', value => {
                     node.data = value; 
@@ -493,7 +494,9 @@ export function flowEditor(params) {
                 this.nodes.forEach((node) => {
                     const { x, y } = g.node(node.id);
                     const { width, height } = node;
-                    this.getNodeById(node.id).position = {
+                    let currentNode = this.getNodeById(node.id)
+                    currentNode.positionComputed = true
+                    currentNode.position = {
                         x: x - width / 2,
                         y: y - height / 2,
                     };

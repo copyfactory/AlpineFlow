@@ -21,6 +21,7 @@ export function getCompleteNode(currentNodeData) {
         data: {},
         position: { x: 0, y: 0 },
         type: '',
+        positionComputed: false,
         selected: false,
         selectable: true,
         deletable: true,
@@ -56,6 +57,7 @@ export function getCompleteNode(currentNodeData) {
         },
     });
     newNode.id = newNode.id.toString();
+    newNode.positionComputed = false
     return newNode;
 }
 
