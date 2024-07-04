@@ -57,6 +57,10 @@ export function flowEditor(params) {
     const internalProps = {
         areNodesReady: false,
         hasInit: false,
+        transformationQueue: [],
+        callbackQueue: [],
+        isProcessing: false,
+        debouncedLayoutGraph: null,
         canvasPosition: { x: 0, y: 0 },
         zoom: 1,
         grabbing: false,
@@ -103,10 +107,16 @@ export function flowEditor(params) {
          * Initializes the flow editor with provided parameters.
          */
         init() {
+            this._layoutGraph = this._layoutGraph.bind(this);
+            this.debouncedLayoutGraph = Alpine.debounce(this._layoutGraph, 25);
             if (!this.nodeTypes) {
                 this.nodeTypes = this.$nodes.default;
             }
             injectCanvasToEle(this.$el);
+
+            this.$watch('nodes', (value) => {
+                this.dispatchEvent('nodes-updated', { data: value });
+            });
 
             this.nodes = this.nodes.map((incompleteNode) => {
                 let nodeConfig = this.getNodeConfig(incompleteNode.type);
@@ -123,9 +133,38 @@ export function flowEditor(params) {
                 this.hasInit = true;
                 this.dispatchEvent('init', { data: true });
             });
-            this.$watch('nodes', (value) =>
-                this.dispatchEvent('nodes-updated', { data: value }),
-            );
+        },
+
+        enqueueTransformation(transformationFunction, callback) {
+            this.transformationQueue.push(transformationFunction);
+            if (callback) {
+                this.callbackQueue.push(callback);
+            }
+            this.processQueue();
+        },
+
+        processQueue() {
+            this.$nextTick(() => {
+                this.isProcessing = true;
+                const state = {
+                    nodes: [...this.nodes],
+                    edges: [...this.edges],
+                };
+                while (this.transformationQueue.length > 0) {
+                    const transformationFunction =
+                        this.transformationQueue.shift();
+                    transformationFunction(state);
+                }
+
+                while (this.callbackQueue.length > 0) {
+                    const callback = this.callbackQueue.shift();
+                    callback(state);
+                }
+                this.nodes = state.nodes;
+                this.edges = state.edges;
+                this.isProcessing = false;
+                this.layoutGraph();
+            });
         },
 
         /**
@@ -186,84 +225,79 @@ export function flowEditor(params) {
         hasChildren(nodeId) {
             return this.lastGraphResult.outEdges(nodeId).length > 0;
         },
-        /**
-         * Checks if node can be added based on the node config and provided node relationship.
-         * @param {Object} completeNode - The node to check.
-         * @param {Array|null} dependsOn - The nodes on which the new node depends.
-         * @returns {boolean} - True if the node can be added, False otherwise.
-         */
-        canAddNode(completeNode, dependsOn) {
-            if (!dependsOn) return true;
-            for (const nodeId of dependsOn) {
-                const node = this.getNodeById(nodeId);
-                if (
-                    !node ||
-                    node.allowChildren === false ||
-                    (!node.allowBranching &&
-                        this.findChildren(nodeId).length > 0)
-                ) {
-                    return false;
-                }
-            }
-            return true;
-        },
+
         /**
          * Adds a node to the flow editor.
          * @param {Object} incompleteNode - The incomplete node to be added.
          * @param {Array|null} dependsOn - The nodes on which the new node depends.
+         * @param callback
          */
-        addNode(incompleteNode, dependsOn = null) {
-            dependsOn = dependsOn ? dependsOn : [];
-            if (!this.nodeTypes.hasOwnProperty(incompleteNode.type)) {
-                console.warn(
-                    `'${incompleteNode.type}' does not exists in the registry.`,
-                );
-                return;
-            }
-            let nodeConfig = this.getNodeConfig(incompleteNode.type);
-            incompleteNode = { ...nodeConfig, ...incompleteNode };
-            // Allow setting of any node params
-            let completeNode = getCompleteNode(incompleteNode);
-            if (!this.canAddNode(completeNode, dependsOn)) {
-                // If can't add node directly we can try to shift the branch down by one
-                // when only 1 dependant.
+        addNode(incompleteNode, dependsOn = [], callback = null) {
+            this.enqueueTransformation((state) => {
+                const { type } = incompleteNode;
+
+                if (!this.nodeTypes.hasOwnProperty(type)) {
+                    console.warn(`'${type}' does not exist in the registry.`);
+                    return;
+                }
+
+                const nodeConfig = this.getNodeConfig(type);
+                const completeNode = getCompleteNode({
+                    ...nodeConfig,
+                    ...incompleteNode,
+                });
+
                 if (dependsOn.length === 1) {
-                    let depNodeId = dependsOn[0];
-                    let successors = this.lastGraphResult.successors(depNodeId);
-                    let adjustedEdges = [];
-                    if (successors.length) {
-                        successors.forEach((child) => {
-                            this.edges = this.edges.filter(
-                                (edge) => edge.target !== child,
-                            );
-                            let newEdge = {
-                                source: completeNode.id,
-                                target: child,
-                            };
-                            adjustedEdges.push(getCompleteEdge(newEdge));
-                        });
-                        adjustedEdges.push(
-                            getCompleteEdge({
-                                source: depNodeId,
-                                target: completeNode.id,
-                            }),
+                    const depNodeId = dependsOn[0];
+                    const node = state.nodes.find(({ id }) => id === depNodeId);
+
+                    if (node) {
+                        const latestGraph = this.buildDagre(
+                            state.nodes,
+                            state.edges,
                         );
-                        this.nodes = this.nodes.concat([completeNode]);
-                        this.edges = this.edges.concat(adjustedEdges);
+                        const hasOutEdges =
+                            latestGraph.outEdges(node.id).length > 0;
+
+                        if (
+                            !node.allowChildren ||
+                            (!node.allowBranching && hasOutEdges)
+                        ) {
+                            const successors =
+                                latestGraph.successors(depNodeId);
+                            const adjustedEdges = successors.map((child) => {
+                                state.edges = state.edges.filter(
+                                    ({ target }) => target !== child,
+                                );
+                                return getCompleteEdge({
+                                    source: completeNode.id,
+                                    target: child,
+                                });
+                            });
+
+                            adjustedEdges.push(
+                                getCompleteEdge({
+                                    source: depNodeId,
+                                    target: completeNode.id,
+                                }),
+                            );
+                            state.nodes.push(completeNode);
+                            state.edges.push(...adjustedEdges);
+                            return;
+                        }
                     }
                 }
-                return;
-            }
-            let newEdges = dependsOn.map((depNodeId) => {
-                return getCompleteEdge({
-                    source: depNodeId,
-                    target: completeNode.id,
-                });
-            });
-            this.nodes = this.nodes.concat([completeNode]);
-            this.edges = this.edges.concat(newEdges);
-        },
 
+                const newEdges = dependsOn.map((depNodeId) =>
+                    getCompleteEdge({
+                        source: depNodeId,
+                        target: completeNode.id,
+                    }),
+                );
+                state.nodes.push(completeNode);
+                state.edges.push(...newEdges);
+            }, callback);
+        },
         /**
          * Recursively searches the graph for ancestors of a given nodeId.
          * @param {string} nodeId - The nodeId.
@@ -334,9 +368,7 @@ export function flowEditor(params) {
             let childrenOfNode = this.lastGraphResult
                 .outEdges(completeNode.id)
                 .map((edge) => edge.w);
-
-            let deletedNodes = [completeNode.id];
-
+            let deletedNodes = new Set([completeNode.id]);
             // if preserve set the next child to being new target.
             if (strategy === 'preserve') {
                 if (childrenOfNode.length === 1) {
@@ -350,30 +382,30 @@ export function flowEditor(params) {
                     }
                 }
                 if (childrenOfNode.length > 1) {
-                    deletedNodes = deletedNodes.concat(
-                        this.findDescendantsOfNode(completeNode.id),
+                    this.findDescendantsOfNode(completeNode.id).forEach(
+                        (nodeId) => deletedNodes.add(nodeId),
                     );
                 }
             }
             // if not preserve we remove all descendants.
             else {
-                deletedNodes = deletedNodes.concat(
-                    this.findDescendantsOfNode(completeNode.id),
+                this.findDescendantsOfNode(completeNode.id).forEach((nodeId) =>
+                    deletedNodes.add(nodeId),
                 );
             }
 
-            // Cleanup edges.
-            this.nodes = this.nodes.filter(
-                (node) => !deletedNodes.includes(node.id),
-            );
-            this.edges = this.edges.filter(
-                (edge) => !deletedNodes.includes(edge.source),
-            );
-            this.edges = this.edges.filter(
-                (edge) => !deletedNodes.includes(edge.target),
-            );
+            this.enqueueTransformation((state) => {
+                state.nodes = state.nodes.filter(
+                    (node) => !deletedNodes.has(node.id),
+                );
+                state.edges = state.edges.filter(
+                    (edge) =>
+                        !deletedNodes.has(edge.source) &&
+                        !deletedNodes.has(edge.target),
+                );
+            });
+
             this.edgesWithPath = [];
-            this.layoutGraph();
             this.dispatchEvent('nodes-deleted', {
                 data: Array.from(deletedNodes),
             });
@@ -453,12 +485,14 @@ export function flowEditor(params) {
                     node.data = {...props, ...node.data};
                     props = node.data;
                     node.setComputedWidthHeight($el);
-                 
+                    if (!isProcessing){
+                        layoutGraph();
+                    }
+                                   
                 });
                 $watch('props', value => {
                     node.data = value; 
                     node.setComputedWidthHeight($el); 
-                    layoutGraph();
                 });
             `,
             );
@@ -469,68 +503,77 @@ export function flowEditor(params) {
          * Builds the graph using the Dagre layout.
          * @returns {Object} - The constructed graph.
          */
-        buildDagre() {
+        buildDagre(nodes = null, edges = null) {
+            if (!nodes) {
+                nodes = this.nodes;
+            }
+            if (!edges) {
+                edges = this.edges;
+            }
+
             let g = new dagre.graphlib.Graph();
+
             g.setGraph({});
             g.setDefaultEdgeLabel(function () {
                 return {};
             });
-            this.nodes.forEach((node) => {
+            nodes.forEach((node) => {
                 g.setNode(node.id, node);
             });
 
-            this.edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+            edges.forEach((edge) => g.setEdge(edge.source, edge.target));
 
             dagre.layout(g);
             return g;
         },
+
         /**
          * Layouts the graph based on the current state and renders the diagram.
          */
         layoutGraph() {
-            // Only render AFTER props are done doing their inner dom things.
-            this.$nextTick(() => {
-                let g = this.buildDagre();
-                if (!g) {
-                    return;
-                }
+            this.debouncedLayoutGraph();
+        },
+        _layoutGraph() {
+            let g = this.buildDagre();
+            if (!g) {
+                return;
+            }
+            let { width, height } = g.graph();
+            this.setWidthAndHeight(width, height);
 
-                let { width, height } = g.graph();
-                this.setWidthAndHeight(width, height);
-
-                this.nodes.forEach((node) => {
-                    const { x, y } = g.node(node.id);
-                    const { width, height } = node;
-                    let currentNode = this.getNodeById(node.id);
-                    currentNode.positionComputed = true;
-                    currentNode.position = {
-                        x: x - width / 2,
-                        y: y - height / 2,
-                    };
-                });
-
-                this.edgesWithPath = this.edges.map((edge) => {
-                    let source = this.getNodeById(edge.source);
-                    let target = this.getNodeById(edge.target);
-                    let sourcePos = {
-                        x: source.x,
-                        y: source.y + source.height / 2,
-                    };
-                    let targetPos = {
-                        x: target.x,
-                        y: target.y - target.height / 2,
-                    };
-                    const [path, labelX, labelY, offsetX, offsetY] =
-                        getSmoothStepPath({
-                            sourceX: sourcePos.x,
-                            sourceY: sourcePos.y,
-                            targetX: targetPos.x,
-                            targetY: targetPos.y,
-                        });
-                    return { edge: edge, path: path };
-                });
-                this.lastGraphResult = g;
+            this.nodes.forEach((node) => {
+                const { x, y } = g.node(node.id);
+                const { width, height } = node;
+                let currentNode = this.getNodeById(node.id);
+                currentNode.positionComputed = true;
+                currentNode.position = {
+                    x: x - width / 2,
+                    y: y - height / 2,
+                };
             });
+
+            this.edgesWithPath = this.edges.map((edge) => {
+                let source = this.getNodeById(edge.source);
+                let target = this.getNodeById(edge.target);
+                let sourcePos = {
+                    x: source.x,
+                    y: source.y + source.height / 2,
+                };
+                let targetPos = {
+                    x: target.x,
+                    y: target.y - target.height / 2,
+                };
+                const [path, labelX, labelY, offsetX, offsetY] =
+                    getSmoothStepPath({
+                        sourceX: sourcePos.x,
+                        sourceY: sourcePos.y,
+                        targetX: targetPos.x,
+                        targetY: targetPos.y,
+                    });
+                return { edge: edge, path: path };
+            });
+            this.lastGraphResult = g;
+            return g;
         },
         /**
          * Sets the with and height to the canvas in order to compute various viewports.
