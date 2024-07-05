@@ -1,6 +1,6 @@
 {
     "name": "@copyfactory/alpine-flow",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "Alpine Flow makes creating directed step based flowcharts and node based workflow UIs (DAG) in AlpineJS an easier task.",
     "license": "MIT",
     "author": "Copyfactory (https://copyfactory.io/)",
