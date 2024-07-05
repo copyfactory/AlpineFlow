@@ -7,9 +7,8 @@ export const canvasHTML = `
          class="flow__background">
         <div class="flow__renderer">
             <template x-if="areNodesReady">
-                
-                <div :style="'height:' + height + 'px;width: ' + width + 'px;'">
-                    <div @flow-set-h-w.window="height = event.detail.height;width = event.detail.width" x-ref="viewportEle" class="flow__renderer">
+                <div x-init="_processQueue" :style="'height:' + height + 'px;width: ' + width + 'px;'">
+                    <div x-init="_setupPanZoom" x-ref="viewportEle" class="flow__renderer">
                         <div class="flow__viewport flow__canvas-container"
                             :style="'transform: translate(' + canvasPosition.x + 'px, ' + canvasPosition.y + 'px) scale(' + zoom + ');'" 
                         >

@@ -59,7 +59,6 @@ export function flowEditor(params) {
         hasInit: false,
         transformationQueue: [],
         callbackQueue: [],
-        isProcessing: false,
         debouncedLayoutGraph: null,
         canvasPosition: { x: 0, y: 0 },
         zoom: 1,
@@ -114,38 +113,29 @@ export function flowEditor(params) {
             }
             injectCanvasToEle(this.$el);
 
-            this.$watch('nodes', (value) => {
-                this.dispatchEvent('nodes-updated', { data: value });
-            });
-
             this.nodes = this.nodes.map((incompleteNode) => {
                 let nodeConfig = this.getNodeConfig(incompleteNode.type);
                 incompleteNode = { ...nodeConfig, ...incompleteNode };
                 return getCompleteNode(incompleteNode);
             });
             this.edges = this.edges.map((edge) => getCompleteEdge(edge));
-
             this.areNodesReady = true;
-
-            this.$nextTick(() => {
-                let viewportEle = this.$refs.viewportEle;
-                this.panZoomInstance = this.setupPanZoomInstance(viewportEle);
-                this.hasInit = true;
-                this.dispatchEvent('init', { data: true });
-            });
         },
 
+        _setupPanZoom() {
+            let viewportEle = this.$refs.viewportEle;
+            this.panZoomInstance = this.setupPanZoomInstance(viewportEle);
+        },
         enqueueTransformation(transformationFunction, callback) {
             this.transformationQueue.push(transformationFunction);
             if (callback) {
                 this.callbackQueue.push(callback);
             }
-            this.processQueue();
+            this._processQueue();
         },
 
-        processQueue() {
+        _processQueue() {
             this.$nextTick(() => {
-                this.isProcessing = true;
                 const state = {
                     nodes: [...this.nodes],
                     edges: [...this.edges],
@@ -162,8 +152,11 @@ export function flowEditor(params) {
                 }
                 this.nodes = state.nodes;
                 this.edges = state.edges;
-                this.isProcessing = false;
                 this.layoutGraph();
+                if (!this.hasInit) {
+                    this.hasInit = true;
+                    this.dispatchEvent('init', { data: true });
+                }
             });
         },
 
@@ -232,7 +225,7 @@ export function flowEditor(params) {
          * @param {Object} incompleteNode - The incomplete node to be added.
          */
         createNode(incompleteNode) {
-            return getCompleteNode(incompleteNode)
+            return getCompleteNode(incompleteNode);
         },
         /**
          * Get an Edge with all properties needed to add to editor.
@@ -240,7 +233,7 @@ export function flowEditor(params) {
          * @param {Object} incompleteEdge - The incomplete node to be added.
          */
         createEdge(incompleteEdge) {
-            return getCompleteEdge(incompleteEdge)
+            return getCompleteEdge(incompleteEdge);
         },
         /**
          * Adds a node to the flow editor.
@@ -501,14 +494,13 @@ export function flowEditor(params) {
                     node.data = {...props, ...node.data};
                     props = node.data;
                     node.setComputedWidthHeight($el);
-                    if (!isProcessing){
-                        layoutGraph();
-                    }
-                                   
+                    layoutGraph();
+                    dispatchEvent('new-node-rendered', {id: node.id})
                 });
                 $watch('props', value => {
                     node.data = value; 
-                    node.setComputedWidthHeight($el); 
+                    node.setComputedWidthHeight($el);
+                    layoutGraph(); 
                 });
             `,
             );
@@ -555,7 +547,8 @@ export function flowEditor(params) {
                 return;
             }
             let { width, height } = g.graph();
-            this.setWidthAndHeight(width, height);
+            this.width = width;
+            this.height = height;
 
             this.nodes.forEach((node) => {
                 const { x, y } = g.node(node.id);
@@ -590,17 +583,6 @@ export function flowEditor(params) {
             });
             this.lastGraphResult = g;
             return g;
-        },
-        /**
-         * Sets the with and height to the canvas in order to compute various viewports.
-         * This is set automatically whenever the diagram is rendered.
-         *
-         * @param {number} w - The new width.
-         * @param {number} h - The new height.
-         */
-        setWidthAndHeight(w, h) {
-            // we need to dispatch to the canvas-html element which sets it.
-            this.dispatchEvent('set-h-w', { height: h, width: w });
         },
         /**
          * Creates the D3 instance to pan and zoom the editor.
