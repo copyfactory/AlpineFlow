@@ -56,7 +56,7 @@ export default [
             file: 'dist/alpine-flow.esm.js',
             format: 'esm',
         },
-        plugins: [...plugins, terser()],
+        plugins: plugins,
     },
     // CommonJS
     {
@@ -65,6 +65,6 @@ export default [
             file: 'dist/alpine-flow.cjs.js',
             format: 'cjs',
         },
-        plugins: [...plugins, terser()],
+        plugins: plugins,
     },
 ];
