@@ -227,6 +227,22 @@ export function flowEditor(params) {
         },
 
         /**
+         * Get a Node with all properties needed to add to editor.
+         * This is handled for you when using public APIs but is useful to create custom logic.
+         * @param {Object} incompleteNode - The incomplete node to be added.
+         */
+        createNode(incompleteNode) {
+            return getCompleteNode(incompleteNode)
+        },
+        /**
+         * Get an Edge with all properties needed to add to editor.
+         * This is handled for you when using public APIs but is useful to create custom logic.
+         * @param {Object} incompleteEdge - The incomplete node to be added.
+         */
+        createEdge(incompleteEdge) {
+            return getCompleteEdge(incompleteEdge)
+        },
+        /**
          * Adds a node to the flow editor.
          * @param {Object} incompleteNode - The incomplete node to be added.
          * @param {Array|null} dependsOn - The nodes on which the new node depends.
