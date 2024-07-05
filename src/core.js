@@ -495,7 +495,7 @@ export function flowEditor(params) {
                     props = node.data;
                     node.setComputedWidthHeight($el);
                     layoutGraph();
-                    dispatchEvent('new-node-rendered', {id: node.id})
+                    dispatchEvent('new-node-rendered', {data: node.id})
                 });
                 $watch('props', value => {
                     node.data = value; 

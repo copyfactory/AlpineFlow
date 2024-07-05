@@ -642,7 +642,7 @@ let newEditor = flowEditor(flowObject);
 
 You can hook into events using the normal Alpine syntax of `@event-name`.
 
-All events emitted by Alpine Flow will have the prefix `flo-`.
+All events emitted by Alpine Flow will have the prefix `flow-`.
 
 ---
 
@@ -660,16 +660,16 @@ console.log(event);
 
 ---
 
-### `@flow-nodes-updated.window`
+### `@flow-new-node-rendered.window`
 
-Dispatched when the nodes have been modified.
+Dispatched when a new node is rendered.
 
 **Event detail**
 
 ```js
 event = $event.detail;
 console.log(event);
-// {data: [{id: 1, type: 'myNode', data: {}...}]}
+// {data: 'node-id'}
 ```
 
 ---
