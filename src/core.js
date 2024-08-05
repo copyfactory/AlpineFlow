@@ -497,16 +497,22 @@ export function flowEditor(params) {
                     layoutGraph();
                     dispatchEvent('new-node-rendered', {data: node.id})
                 });
+                setupResizeObserver(node, $el)
                 $watch('props', value => {
                     node.data = value; 
-                    node.setComputedWidthHeight($el);
-                    layoutGraph(); 
                 });
             `,
             );
             return clonedNodeEle.outerHTML;
         },
 
+        setupResizeObserver(node, ele){
+            let observer = new ResizeObserver((entries) => {
+                node.setComputedWidthHeight(ele)
+                this.layoutGraph()
+            })
+            observer.observe(ele)
+        },
         /**
          * Builds the graph using the Dagre layout.
          * @returns {Object} - The constructed graph.
