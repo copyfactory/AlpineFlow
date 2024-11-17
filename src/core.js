@@ -1,7 +1,7 @@
 import { getCompleteNode } from './node';
 import { getFirstItemOrNull } from './util';
 import * as dagre from '@dagrejs/dagre';
-import { getSmoothStepPath } from './edges/smooth-edge';
+import { getSmoothStepPath, Position } from './edges/smooth-edge';
 import { getCompleteEdge } from './edges/edge';
 import { injectCanvasToEle } from './canvas-html';
 import { panZoomManager } from './viewport/viewport-manager';
@@ -14,6 +14,7 @@ import { PanOnScrollMode } from './viewport/events';
  * @property {Array} [nodes=[]] - The initial nodes to populate the editor.
  * @property {Array} [edges=[]] - The initial edges to populate the editor.
  * @property {Object} [viewport={x:0, y:0,zoom:1}] - The viewport positioning to set.
+ * @property {Object} [dagreConfig={rankdir:'TB', nodesep:50, ranksep:50}] - The config to use with Dagre.
  * @property {boolean} [zoomOnWheelScroll=false] - Whether to enable zooming on wheel scroll.
  * @property {boolean} [zoomOnPinch=true] - Whether to enable zooming on pinch gestures.
  * @property {boolean} [panOnScroll=true] - Whether to enable panning on scroll.
@@ -37,7 +38,13 @@ export function flowEditor(params) {
     /**
      * The flow editor object.
      */
+    const dagreConfig = {
+        rankdir: 'TB',
+        nodesep: 50,
+        ranksep: 50,
+    };
     const defaultConfig = {
+        dagreConfig,
         nodeTypes: null,
         nodes: [],
         edges: [],
@@ -506,12 +513,12 @@ export function flowEditor(params) {
             return clonedNodeEle.outerHTML;
         },
 
-        setupResizeObserver(node, ele){
+        setupResizeObserver(node, ele) {
             let observer = new ResizeObserver((entries) => {
-                node.setComputedWidthHeight(ele)
-                this.layoutGraph()
-            })
-            observer.observe(ele)
+                node.setComputedWidthHeight(ele);
+                this.layoutGraph();
+            });
+            observer.observe(ele);
         },
         /**
          * Builds the graph using the Dagre layout.
@@ -524,13 +531,10 @@ export function flowEditor(params) {
             if (!edges) {
                 edges = this.edges;
             }
-
             let g = new dagre.graphlib.Graph();
-
-            g.setGraph({});
-            g.setDefaultEdgeLabel(function () {
-                return {};
-            });
+            g = new dagre.graphlib.Graph()
+                .setGraph(this.dagreConfig)
+                .setDefaultEdgeLabel(() => ({}));
             nodes.forEach((node) => {
                 g.setNode(node.id, node);
             });
@@ -570,21 +574,44 @@ export function flowEditor(params) {
             this.edgesWithPath = this.edges.map((edge) => {
                 let source = this.getNodeById(edge.source);
                 let target = this.getNodeById(edge.target);
-                let sourcePos = {
-                    x: source.x,
-                    y: source.y + source.height / 2,
+                const positionMap = {
+                    TB: {
+                        sourceX: source.x,
+                        sourceY: source.y + source.height / 2,
+                        targetX: target.x,
+                        targetY: target.y - target.height / 2,
+                        sourcePosition: Position.Bottom,
+                        targetPosition: Position.Top,
+                    },
+                    BT: {
+                        sourceX: source.x,
+                        sourceY: source.y - source.height / 2,
+                        targetX: target.x,
+                        targetY: target.y + target.height / 2,
+                        sourcePosition: Position.Top,
+                        targetPosition: Position.Bottom,
+                    },
+                    LR: {
+                        sourceX: source.x + source.width / 2,
+                        sourceY: source.y,
+                        targetX: target.x - target.width / 2,
+                        targetY: target.y,
+                        sourcePosition: Position.Right,
+                        targetPosition: Position.Left,
+                    },
+                    RL: {
+                        sourceX: source.x - source.width / 2,
+                        sourceY: source.y,
+                        targetX: target.x + target.width / 2,
+                        targetY: target.y,
+                        sourcePosition: Position.Left,
+                        targetPosition: Position.Right,
+                    },
                 };
-                let targetPos = {
-                    x: target.x,
-                    y: target.y - target.height / 2,
-                };
+                const rankConfig =
+                    positionMap[this.dagreConfig?.rankdir] || positionMap.TB;
                 const [path, labelX, labelY, offsetX, offsetY] =
-                    getSmoothStepPath({
-                        sourceX: sourcePos.x,
-                        sourceY: sourcePos.y,
-                        targetX: targetPos.x,
-                        targetY: targetPos.y,
-                    });
+                    getSmoothStepPath(rankConfig);
                 return { edge: edge, path: path };
             });
             this.lastGraphResult = g;

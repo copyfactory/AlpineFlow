@@ -9,7 +9,7 @@ import { getEdgeCenter } from '../util';
  * @readonly
  * @enum {string}
  */
-let Position = {
+export let Position = {
     Left: 'left',
     Top: 'top',
     Right: 'right',
