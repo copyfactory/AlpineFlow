@@ -80,9 +80,9 @@ export function flowEditor(params) {
         canvas: null,
         toolbar: null,
         panZoomInstance: null,
-        lastGraphResult: null,
 
         // Node lookup for doing {nodeId: {nodeId: '': type: ''...} }
+        lastGraphState: { nodes: [], edges: [], graph: null },
         nodeLookupCacheMap: {},
     };
 
@@ -199,7 +199,7 @@ export function flowEditor(params) {
          * @returns {Array} - A list of nodes that are a parent to the give nodeId.
          */
         findParents(nodeId) {
-            let parents = this.lastGraphResult
+            let parents = this.buildDagre()
                 .inEdges(nodeId)
                 .map((edge) => edge.v);
             if (parents) {
@@ -213,7 +213,7 @@ export function flowEditor(params) {
          * @returns {Array} - A list of nodes that are a children to the give nodeId.
          */
         findChildren(nodeId) {
-            let children = this.lastGraphResult
+            let children = this.buildDagre()
                 .outEdges(nodeId)
                 .map((edge) => edge.w);
             if (children) {
@@ -223,7 +223,7 @@ export function flowEditor(params) {
         },
 
         hasChildren(nodeId) {
-            return this.lastGraphResult.outEdges(nodeId).length > 0;
+            return this.buildDagre().outEdges(nodeId).length > 0;
         },
 
         /**
@@ -325,7 +325,7 @@ export function flowEditor(params) {
             const stack = [nodeId];
             while (stack.length > 0) {
                 const currentId = stack.pop();
-                const parents = this.lastGraphResult.predecessors(currentId);
+                const parents = this.buildDagre().predecessors(currentId);
                 if (parents) {
                     parents.forEach((parent) => {
                         if (!visited.has(parent)) {
@@ -381,7 +381,7 @@ export function flowEditor(params) {
             if (!strategyOptions.includes(strategy)) {
                 return [];
             }
-            let childrenOfNode = this.lastGraphResult
+            let childrenOfNode = this.buildDagre()
                 .outEdges(completeNode.id)
                 .map((edge) => edge.w);
             let deletedNodes = new Set([completeNode.id]);
@@ -531,8 +531,10 @@ export function flowEditor(params) {
             if (!edges) {
                 edges = this.edges;
             }
-            let g = new dagre.graphlib.Graph();
-            g = new dagre.graphlib.Graph()
+            if (this.lastGraphState.nodes === nodes && this.lastGraphState.edges === edges) {
+                return this.lastGraphState.graph;
+            }
+            const g = new dagre.graphlib.Graph()
                 .setGraph(this.dagreConfig)
                 .setDefaultEdgeLabel(() => ({}));
             nodes.forEach((node) => {
@@ -542,6 +544,11 @@ export function flowEditor(params) {
             edges.forEach((edge) => g.setEdge(edge.source, edge.target));
 
             dagre.layout(g);
+            this.lastGraphState = {
+                nodes: nodes,
+                edges: edges,
+                graph: g,
+            };
             return g;
         },
 
@@ -550,6 +557,15 @@ export function flowEditor(params) {
          */
         layoutGraph() {
             this.debouncedLayoutGraph();
+        },
+        _updateNodePosition(node, g) {
+            const { x, y } = g.node(node.id);
+            const { width, height } = node;
+            node.positionComputed = true;
+            node.position = {
+                x: x - width / 2,
+                y: y - height / 2,
+            };
         },
         _layoutGraph() {
             let g = this.buildDagre();
@@ -561,14 +577,8 @@ export function flowEditor(params) {
             this.height = height;
 
             this.nodes.forEach((node) => {
-                const { x, y } = g.node(node.id);
-                const { width, height } = node;
                 let currentNode = this.getNodeById(node.id);
-                currentNode.positionComputed = true;
-                currentNode.position = {
-                    x: x - width / 2,
-                    y: y - height / 2,
-                };
+                this._updateNodePosition(currentNode, g);
             });
 
             this.edgesWithPath = this.edges.map((edge) => {
@@ -614,7 +624,6 @@ export function flowEditor(params) {
                     getSmoothStepPath(rankConfig);
                 return { edge: edge, path: path };
             });
-            this.lastGraphResult = g;
             return g;
         },
         /**
