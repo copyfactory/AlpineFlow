@@ -13,6 +13,7 @@ import { PanOnScrollMode } from './viewport/events';
  * @property {Object} [nodeTypes=null] - The types of nodes available in the editor.
  * @property {Array} [nodes=[]] - The initial nodes to populate the editor.
  * @property {Array} [edges=[]] - The initial edges to populate the editor.
+ * @property {boolean} [autoCenter=false] - If enabled, will automatically center all nodes in view whenever the size of the graph changes.
  * @property {Object} [viewport={x:0, y:0,zoom:1}] - The viewport positioning to set.
  * @property {Object} [dagreConfig={rankdir:'TB', nodesep:50, ranksep:50}] - The config to use with Dagre.
  * @property {boolean} [zoomOnWheelScroll=false] - Whether to enable zooming on wheel scroll.
@@ -48,6 +49,7 @@ export function flowEditor(params) {
         nodeTypes: null,
         nodes: [],
         edges: [],
+        autoCenter: false,
         zoomOnWheelScroll: false,
         zoomOnPinch: true,
         panOnScroll: true,
@@ -82,7 +84,6 @@ export function flowEditor(params) {
         panZoomInstance: null,
 
         // Node lookup for doing {nodeId: {nodeId: '': type: ''...} }
-        lastGraphState: { nodes: [], edges: [], graph: null },
         nodeLookupCacheMap: {},
     };
 
@@ -127,6 +128,15 @@ export function flowEditor(params) {
             });
             this.edges = this.edges.map((edge) => getCompleteEdge(edge));
             this.areNodesReady = true;
+            this.$watch('width, height', (_) => {
+                if (!this.hasInit) {
+                    this.hasInit = true;
+                    this.dispatchEvent('init', { data: true });
+                }
+                if (this.autoCenter) {
+                    this.setViewportToCenter();
+                }
+            });
         },
 
         _setupPanZoom() {
@@ -160,10 +170,6 @@ export function flowEditor(params) {
                 this.nodes = state.nodes;
                 this.edges = state.edges;
                 this.layoutGraph();
-                if (!this.hasInit) {
-                    this.hasInit = true;
-                    this.dispatchEvent('init', { data: true });
-                }
             });
         },
 
@@ -531,24 +537,14 @@ export function flowEditor(params) {
             if (!edges) {
                 edges = this.edges;
             }
-            if (this.lastGraphState.nodes === nodes && this.lastGraphState.edges === edges) {
-                return this.lastGraphState.graph;
-            }
             const g = new dagre.graphlib.Graph()
                 .setGraph(this.dagreConfig)
                 .setDefaultEdgeLabel(() => ({}));
             nodes.forEach((node) => {
                 g.setNode(node.id, node);
             });
-
             edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-
             dagre.layout(g);
-            this.lastGraphState = {
-                nodes: nodes,
-                edges: edges,
-                graph: g,
-            };
             return g;
         },
 
@@ -557,15 +553,6 @@ export function flowEditor(params) {
          */
         layoutGraph() {
             this.debouncedLayoutGraph();
-        },
-        _updateNodePosition(node, g) {
-            const { x, y } = g.node(node.id);
-            const { width, height } = node;
-            node.positionComputed = true;
-            node.position = {
-                x: x - width / 2,
-                y: y - height / 2,
-            };
         },
         _layoutGraph() {
             let g = this.buildDagre();
@@ -577,8 +564,14 @@ export function flowEditor(params) {
             this.height = height;
 
             this.nodes.forEach((node) => {
+                const { x, y } = g.node(node.id);
+                const { width, height } = node;
                 let currentNode = this.getNodeById(node.id);
-                this._updateNodePosition(currentNode, g);
+                currentNode.positionComputed = true;
+                currentNode.position = {
+                    x: x - width / 2,
+                    y: y - height / 2,
+                };
             });
 
             this.edgesWithPath = this.edges.map((edge) => {
